@@ -1,6 +1,55 @@
-# services:
-  # backend:
+services:
+  mongo:
+    image: mongo:7
+    container_name: prod-mongo
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - backend-net
 
-  # gateway:
+  backend:
+    image: docker-backend
+    container_name: prod-backend
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      NODE_ENV: production
+      BACKEND_PORT: ${BACKEND_PORT}
+    expose:
+      - "${BACKEND_PORT}"
+    networks:
+      - backend-net
 
-  # mongo:
+  gateway:
+    image: docker-gateway
+    container_name: prod-gateway
+    restart: unless-stopped
+    depends_on:
+      - backend
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      GATEWAY_PORT: ${GATEWAY_PORT}
+      BACKEND_URL: ${BACKEND_URL}
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+
+volumes:
+  mongo-data:

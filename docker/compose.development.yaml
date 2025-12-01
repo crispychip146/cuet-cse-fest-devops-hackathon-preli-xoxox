@@ -1,7 +1,7 @@
 services:
   mongo:
     image: mongo:7
-    container_name: prod-mongo
+    container_name: dev-mongo
     restart: unless-stopped
     env_file:
       - .env
@@ -17,7 +17,7 @@ services:
   backend:
     build:
       context: ../backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: dev-backend
     restart: unless-stopped
     depends_on:
@@ -32,7 +32,6 @@ services:
       - "${BACKEND_PORT}"
     networks:
       - backend-net
-
 
   gateway:
     build:
@@ -52,7 +51,6 @@ services:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     networks:
       - backend-net
-
 
 networks:
   backend-net:

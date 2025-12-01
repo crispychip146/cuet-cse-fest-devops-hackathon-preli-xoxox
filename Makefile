@@ -1,50 +1,57 @@
-# Docker Services:
-#   up - Start services (use: make up [service...] or make up MODE=prod, ARGS="--build" for options)
-#   down - Stop services (use: make down [service...] or make down MODE=prod, ARGS="--volumes" for options)
-#   build - Build containers (use: make build [service...] or make build MODE=prod)
-#   logs - View logs (use: make logs [service] or make logs SERVICE=backend, MODE=prod for production)
-#   restart - Restart services (use: make restart [service...] or make restart MODE=prod)
-#   shell - Open shell in container (use: make shell [service] or make shell SERVICE=gateway, MODE=prod, default: backend)
-#   ps - Show running containers (use MODE=prod for production)
-#
-# Convenience Aliases (Development):
-#   dev-up - Alias: Start development environment
-#   dev-down - Alias: Stop development environment
-#   dev-build - Alias: Build development containers
-#   dev-logs - Alias: View development logs
-#   dev-restart - Alias: Restart development services
-#   dev-shell - Alias: Open shell in backend container
-#   dev-ps - Alias: Show running development containers
-#   backend-shell - Alias: Open shell in backend container
-#   gateway-shell - Alias: Open shell in gateway container
-#   mongo-shell - Open MongoDB shell
-#
-# Convenience Aliases (Production):
-#   prod-up - Alias: Start production environment
-#   prod-down - Alias: Stop production environment
-#   prod-build - Alias: Build production containers
-#   prod-logs - Alias: View production logs
-#   prod-restart - Alias: Restart production services
-#
-# Backend:
-#   backend-build - Build backend TypeScript
-#   backend-install - Install backend dependencies
-#   backend-type-check - Type check backend code
-#   backend-dev - Run backend in development mode (local, not Docker)
-#
-# Database:
-#   db-reset - Reset MongoDB database (WARNING: deletes all data)
-#   db-backup - Backup MongoDB database
-#
-# Cleanup:
-#   clean - Remove containers and networks (both dev and prod)
-#   clean-all - Remove containers, networks, volumes, and images
-#   clean-volumes - Remove all volumes
-#
-# Utilities:
-#   status - Alias for ps
-#   health - Check service health
-#
-# Help:
-#   help - Display this help message
+# Paths to compose files
+DEV_COMPOSE = docker/compose.development.yaml
+PROD_COMPOSE = docker/compose.production.yaml
 
+# ---------- DEVELOPMENT ----------
+
+## Build and run the full dev stack (gateway + backend + mongo)
+dev-up:
+	docker compose -f $(DEV_COMPOSE) up --build
+
+## Stop dev stack (containers only, keep volumes)
+dev-down:
+	docker compose -f $(DEV_COMPOSE) down
+
+## Follow dev logs
+dev-logs:
+	docker compose -f $(DEV_COMPOSE) logs -f
+
+## Rebuild dev images from scratch (use if deps/Dockerfile changed)
+dev-rebuild:
+	docker compose -f $(DEV_COMPOSE) down
+	docker compose -f $(DEV_COMPOSE) up --build
+
+# ---------- PRODUCTION ----------
+
+## Run prod stack using existing images (NO rebuild)
+prod-up:
+	docker compose -f $(PROD_COMPOSE) up -d
+
+## Stop prod stack
+prod-down:
+	docker compose -f $(PROD_COMPOSE) down
+
+## Follow prod logs
+prod-logs:
+	docker compose -f $(PROD_COMPOSE) logs -f
+
+## Rebuild prod images explicitly (only if really needed)
+prod-rebuild:
+	docker compose -f $(PROD_COMPOSE) down
+	docker compose -f $(PROD_COMPOSE) up --build
+
+# ---------- UTILITIES ----------
+
+## Show running containers for this project
+ps:
+	docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
+
+## Stop everything and prune unused Docker objects (careful)
+clean:
+	docker compose -f $(DEV_COMPOSE) down -v || true
+	docker compose -f $(PROD_COMPOSE) down -v || true
+	docker system prune -f
+
+.PHONY: dev-up dev-down dev-logs dev-rebuild \
+        prod-up prod-down prod-logs prod-rebuild \
+        ps clean
