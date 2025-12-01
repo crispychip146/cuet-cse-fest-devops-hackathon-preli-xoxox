@@ -16,6 +16,9 @@ services:
 
   backend:
     image: docker-backend
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
     container_name: prod-backend
     restart: unless-stopped
     depends_on:
@@ -31,8 +34,12 @@ services:
     networks:
       - backend-net
 
+
   gateway:
     image: docker-gateway
+    build:
+      context: ../gateway
+      dockerfile: Dockerfile
     container_name: prod-gateway
     restart: unless-stopped
     depends_on:
@@ -47,6 +54,7 @@ services:
       - "${GATEWAY_PORT}:${GATEWAY_PORT}"
     networks:
       - backend-net
+
 
 networks:
   backend-net:
